@@ -50,11 +50,10 @@ object Document extends Query {
    
   def getOCR = {
     var id = S.param("d").openOr("no document")
-    val doc = TheCart.get.findBookItem(id.toInt)
-    println("Getting OCR: " + id + " " + doc)
+    val doc = TheCart.get.findPageItem(id.toInt)
     if(doc!=null) {
-      
-      ".thedoc" #> <div id="ocrdata"><p>{doc}</p></div>
+      val ocr = doc.item.getResultSummary.toString
+      ".thedoc" #> <div id="ocrdata"><p>{ocr}</p></div>
     }
     else
       ".thedoc" #> <div id="ocrdata"><p>Error document not found</p></div>

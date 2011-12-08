@@ -68,13 +68,13 @@ object AllItemsPage {
               def html(i: PageItem): NodeSeq = {
                 ( "tr [id]" #> ciToId(i) &
                  "@name *" #> <u><strong>{scala.xml.Unparsed(i.item.getResultTitle)}</strong> (page {i.item.getPageNumber.apply(0)})</u>
-                 <p>{scala.xml.Unparsed(i.item.getResultSummary.toString)}</p>
+                 <p>{scala.xml.Unparsed(i.item.getResultSummary.tagTerms())}</p>
                  <span>{LogServer.logLink("/doc?d=" + i.item.getAccessURI.hashCode, "[Show OCR output]",
                                           S.session.openOr("NONE").toString + " --> Show OCR on page link clicked (" + i.id + ")")}
                  <span> | </span>
                  {LogServer.logLink(Document.getEntitySearchLink(i.item.getAccessURI.hashCode().toString), "[Show entities on this page]",
                                           S.session.openOr("NONE").toString + " --> Show entities on page link clicked (" + i.id + ")")}
-                 <span> | </span>
+                 <span> | </span>S
                  {LogServer.logLink(i.item.getAccessURI, "[View page at Internet Archive]",
                                           S.session.openOr("NONE").toString + " --> Archive Link Clicked (" + i.item.getAccessURI + ")")}</span> &
                  "@img *"  #> <a class="thumbnail" href="#thumb"><img src={i.thumbImg} width={"90"} height={"120"} />

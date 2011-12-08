@@ -161,18 +161,20 @@ object Duplicates extends Query {
       var dupeQuery = S.param("d").openOr("error in listDupes")
 //      var decoded = urlDecode(dupeQuery.toString)
       val dList = TheCart.get.findBookItem(id.toInt).item.getOverlappingCollections.getResults().get.map(i => i.asInstanceOf[CollectionType])
+      // Add these results back into the cart/book bag
+      dList.foreach(d => TheCart.addItem(d))
+      val rlist = dList.map(d => TheCart.get.findBookItem(d.getAccessURI.hashCode))
       info("SESSION ID: " + S.session.openOr("NONE") + ", LIST DUPLICATES")
       // this is called CSS Selector Syntax, and is a nice feature of Lift
-      ".dupeResult" #> dList.map(d => {
-        val imgLink = d.getDepiction
+      ".dupeResult" #> rlist.map(d => {
 //          val order = getOrder(id, d.identifier)
           //".dupeTitle" #> d.displayTitle &
           ".archLink" #> "archLink here" &
           //[book cover] [title] [score] [bar image]
-          ".topbar" #> <a class="thumbnail" href="#thumb"> <img src={imgLink.toString} width={"60"} height={"100"} />
-            <span><img src={imgLink.toString} width={"300"} height={"500"}></img></span> </a> &
+          ".topbar" #> <a class="thumbnail" href="#thumb"> <img src={d.thumbImg} width={"60"} height={"100"} />
+            <span><img src={d.viewImg} width={"300"} height={"500"}></img></span> </a> &
           ".title1" #> {<span>(reference)</span>} &
-          ".title2" #> {<a href={d.getAccessURI}>{d.getResultTitle}</a> } &
+          ".title2" #> {<a href={d.item.getAccessURI}>{d.item.getResultTitle}</a> } &
           ".graph" #>  <img width="200" height="75" src={"http://laguna.cs.umass.edu:6800/gimages/unknown.png"}></img> })
       //green, red bars (images are named alphabetically)
 //    } else {
@@ -180,11 +182,11 @@ object Duplicates extends Query {
 //    }
   }
 
-//  def duplicateTitle = {
-//    var id = S.param("i").openOr("error in duplicateTitle")
-//    ".showTitle" #> <span>Partial duplicates of <I>{getBookTitle(id)}</I></span> &
-//    ".minh" #> <a class="thumbnail" href="#thumb"> <img src = {"http://www.archive.org/download/" + id + "/page/n" + "_cover.jpg"} width={"85"} height={"150"}/>
-//      <span><img src={"http://www.archive.org/download/" + id + "/page/n" + "_cover.jpg"} width={"300"} height={"500"}></img></span> </a>
-//  }
+  def duplicateTitle = {
+    var id = S.param("i").openOr("error in duplicateTitle")
+    val baseDupe = TheCart.get.findBookItem(id.toInt)
+    ".showTitle" #> <span>Partial duplicates of <I>{baseDupe.item.getResultTitle}</I></span> &
+    ".minh" #> <a class="thumbnail" href="#thumb"> <img src ={baseDupe.thumbImg} width={"85"} height={"150"}/> </a>
+  }
 
 }

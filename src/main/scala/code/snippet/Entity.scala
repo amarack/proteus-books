@@ -177,7 +177,7 @@ object Entity extends Query {
       }
       case "location" => {
         val ent = result.asInstanceOf[LocationType]
-        return "(Longitude: " + ent.getLongitude + ", Latitude: " + ent.getLatitude + ")"
+        return "(Longitude: " + ent.getLongitude.apply(0) + ", Latitude: " + ent.getLatitude.apply(0) + ")"
       }
       case _ => {
         return "Organization"

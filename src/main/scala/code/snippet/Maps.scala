@@ -59,6 +59,7 @@ class Maps extends Logger {
         else null
     }
 
+    entities.foreach(e => TheCart.addItem(e))
     var entity_count = 0
     
  
