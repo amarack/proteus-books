@@ -74,7 +74,7 @@ object AllItemsPage {
                  <span> | </span>
                  {LogServer.logLink(Document.getEntitySearchLink(i.item.getAccessURI.hashCode().toString), "[Show entities on this page]",
                                           S.session.openOr("NONE").toString + " --> Show entities on page link clicked (" + i.id + ")")}
-                 <span> | </span>S
+                 <span> | </span>
                  {LogServer.logLink(i.item.getAccessURI, "[View page at Internet Archive]",
                                           S.session.openOr("NONE").toString + " --> Archive Link Clicked (" + i.item.getAccessURI + ")")}</span> &
                  "@img *"  #> <a class="thumbnail" href="#thumb"><img src={i.thumbImg} width={"90"} height={"120"} />

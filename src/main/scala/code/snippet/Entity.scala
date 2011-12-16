@@ -83,9 +83,14 @@ object Entity extends Query {
     
     // page_12357
     val page = S.param("term").open_!
-    
+    val rlist = if (page.startsWith("page_")) {
+	      val pageItem = TheCart.get.findPageItem(page.slice(5, page.length).toInt).item
+	      pageItem.getPeople.getResults().get ::: pageItem.getLocations.getResults().get
+	    } else {
+	      Librarian.performSearch(page, List("person", "location", "organization")) 
+	    }
 
-    val rlist = Librarian.performSearch(page, List("person", "location", "organization"))
+    rlist.foreach(r => TheCart.addItem(r))
     "#entities" #> rlist.map(ent =>
       "a *" #> <strong>{ent.getResultTitle}</strong> &
       "a [href]" #> Entity.getEntityLink(ent.getAccessURI.hashCode.toString, ent.getAccessURI.hashCode.toString) &
