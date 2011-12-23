@@ -37,13 +37,18 @@ libraryDependencies ++= {
 // when using the sbt web app plugin 0.2.4+, use "container" instead of "jetty" for the context
 // Customize any further dependencies as desired
 libraryDependencies ++= Seq(
-  "ciir" %% "proteus-web" % "0.1-SNAPSHOT" % "compile",
+  "edu.umass.ciir.proteus" %% "proteus-project" % "0.1-SNAPSHOT" % "compile",
   "se.scalablesolutions.akka" % "akka-actor" % "1.2" % "compile",
+  "se.scalablesolutions.akka" % "akka-slf4j" % "1.2",
+  "se.scalablesolutions.akka" % "akka-remote" % "1.2",
+  "se.scalablesolutions.akka" % "akka-camel" % "1.2",
+  "se.scalablesolutions.akka" % "akka-typed-actor" % "1.2",
+  "se.scalablesolutions.akka" % "akka-stm" % "1.2",
+  "se.scalablesolutions.akka" % "akka-camel-typed" % "1.2",
   "cc.spray" % "spray-server" % "0.8.0-RC2" % "compile",
   "cc.spray.can" % "spray-can" % "0.9.+" % "compile",
   "cc.spray.json" %% "spray-json" % "1.0.1" % "compile",
   "org.specs2" %% "specs2" % "1.6.1" % "test",
-  "se.scalablesolutions.akka" % "akka-slf4j" % "1.2",
   "org.slf4j" % "slf4j-api" % "1.6.1",
   "ch.qos.logback" % "logback-classic" % "0.9.29",
   "net.liftweb" %% "lift-json" % "2.4-M4",

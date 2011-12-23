@@ -50,11 +50,11 @@ println("Cart is empty? " + cart.queryText.isEmpty)
             def html(ci: BookItem): NodeSeq = {
               
               ( "tr [id]" #> ciToId(ci) &
-               "@title *" #> <i>{ci.item.getResultTitle}</i> &
-               "@img *" #> <a class="thumbnail" href={ci.thumbImg}> <img src = {ci.viewImg} width={"90"} height={"120"} alt="Image Loading" title="Click to view book at the Internet Archive"/>
-               <span><img src={ci.viewImg} width={"300"} height={"500"}></img></span> </a> &
-               "@map *" #> <a href={S.hostAndPath + "/map?book=" + ci.item.getAccessURI.hashCode}>Map Locations</a> &
-               "@dupes *" #> Duplicates.dupeLinked(ci.item.getAccessURI.hashCode.toString)
+               "@title *" #> <i>{ci.item.getTitle}</i> &
+               "@img *" #> <a class="thumbnail" href={ci.item.getThumbUrl}> <img src = {ci.item.getImgUrl} width={"90"} height={"120"} alt="Image Loading" title="Click to view book at the Internet Archive"/>
+               <span><img src={ci.item.getImgUrl} width={"300"} height={"500"}></img></span> </a> &
+               "@map *" #> <a href={S.hostAndPath + "/map?book=" + ci.hashCode}>Map Locations</a> &
+               "@dupes *" #> Duplicates.dupeLinked(ci.hashCode.toString)
               )(theTR)
               
             }

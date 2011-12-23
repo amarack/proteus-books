@@ -52,7 +52,7 @@ object Document extends Query {
     var id = S.param("d").openOr("no document")
     val doc = TheCart.get.findPageItem(id.toInt)
     if(doc!=null) {
-      val ocr = doc.item.getResultSummary.toString
+      val ocr = doc.item.getSummary.getText.toString
       ".thedoc" #> <div id="ocrdata"><p>{ocr}</p></div>
     }
     else

@@ -22,8 +22,8 @@ import scala.collection.JavaConversions._
 //import org.galagosearch.core.retrieval.BadOperatorException
 import code.comet.TheCart
 import code.snippet._
-import proteus.base._
-
+import edu.umass.ciir.proteus.protocol.ProteusProtocol._
+import edu.umass.ciir.proteus._
 /*
  * This class will take a document query and return a list of books ranked the sum of their document scores
  * The top 200 results will be returned for now
@@ -50,68 +50,11 @@ class Book extends Query { //with PaginatorSnippet[String] {
   */
  
 
-  def searchBook(query :String, lang: String) : List[AllType] = {
+  def searchBook(query :String, lang: String) : List[SearchResult] = {
     
     val all_results = Librarian.performSearch(query, List("collection", "page", "picture", "person", "location"))
     return all_results
     
   }
-//
-//  def searchBook(query: String, lang: String) : List[String] = {
-//
-//    val all_results = performBookSearch(query, lang)
-//    var tempHash:HashMap[String, Double] = new HashMap[String, Double]
-//    var otherHash:HashMap[String, SearchResultItem] = new HashMap[String, AllType]
-//    for (item:AllType <- all_results.toList) {
-//      val score = tempHash.get(getBookFromPage(item.identifier))
-//      score match {
-//        case None => {
-//            tempHash.put(getBookFromPage(item.identifier), item.score)
-//            otherHash.put(getBookFromPage(item.identifier), item)
-//        }
-//        case Some(x) => tempHash.update(getBookFromPage(item.identifier), (item.score + x))
-//      }
-//    }
-//    if (tempHash.isEmpty) return List[String]()
-//    var sortMap = ListMap(tempHash.toList.sortBy{_._2}:_*)
-//    booksList = sortMap.keys.toList
-//    booksList
-//  }
-//  
-/*
-  def list = {
-    val p = new Parameters
-    p.set("retrievalGroup", "documents")
-    p.set("withSnippets", "true")
-    search = updateSearchIndex(search, "documents")
-    val all_results = performBookSearch(queryTerm.is, search.open_!, p)
-    println("The query (from all_results): " + all_results.queryAsString)
-    
-    var tempHash:HashMap[String, Double] = new HashMap[String, Double]
-    var otherHash:HashMap[String, SearchResultItem] = new HashMap[String, SearchResultItem]
-    for (item:SearchResultItem <- all_results.items.toList) {
-      val score = tempHash.get(getBookFromPage(item.identifier))
-      score match {
-        case None => {
-            tempHash.put(getBookFromPage(item.identifier), item.score)
-            otherHash.put(getBookFromPage(item.identifier), item)
-        }
-        case Some(x) => tempHash.update(getBookFromPage(item.identifier), (item.score + x))
-      }
-    }
-    var sortMap = ListMap(tempHash.toList.sortBy{_._2}:_*)
-    booksList = sortMap.keys.toList
-    
-    ".result" #> page.map(b =>
-      ".docImage" #> <img src={getCoverImageURL(b)} width={"90"} height={"120"} /> &
-      ".docTitle" #> otherHash.get(b).get.displayTitle &
-      ".docauthor" #> otherHash.get(b).get.metadata.getOrElse("creator", "none") &
-      ".score" #> ("Score: "+ tempHash.get(b).get) &
-      ".mapLink" #> <a href={"map?book="+getBookFromPage(otherHash.get(b).get.identifier)}>Map Locations for this book</a> &
-      ".entsLink" #> <a href={"entities?book="+getBookFromPage(otherHash.get(b).get.identifier)}> Entities for this book</a>
-    )
-    
-  }
-  */
 
 }

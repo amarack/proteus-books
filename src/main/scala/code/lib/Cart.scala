@@ -16,8 +16,12 @@ import net.liftweb.common._
 import util._
 import Helpers._
 
-import proteus.web._
-import proteus.base._
+//import proteus.web._
+//import proteus.base._
+
+import edu.umass.ciir.proteus.protocol.ProteusProtocol._
+
+
 
 /**
  * The shopping cart
@@ -52,19 +56,19 @@ class Cart extends Logger {
    */
   var wiredQuery = ValueCell("")
   val contents = ValueCell[Vector[BookItem]](Vector()) // Books?
-  val book_map = contents.lift(w => w.map(v => v.item.getAccessURI.hashCode -> v).toMap)
+  val book_map = contents.lift(w => w.map(v => v.hashCode -> v).toMap)
 
   val pictures = ValueCell[Vector[PictureItem]](Vector())
   val filtered_pictures = pictures.lift(w => w.filter(x => x.selected).map(v => v))
-  val picture_map = pictures.lift(w => w.map(v => v.item.getAccessURI.hashCode -> v).toMap)
+  val picture_map = pictures.lift(w => w.map(v => v.hashCode -> v).toMap)
 
   val pages = ValueCell[Vector[PageItem]](Vector())
   val filtered_pages = pages.lift(w => w.filter(x => x.selected).map(v => v))
-  val page_map = pages.lift(w => w.map(v => v.item.getAccessURI.hashCode -> v).toMap)
+  val page_map = pages.lift(w => w.map(v => v.hashCode -> v).toMap)
 
   val entities = ValueCell[Vector[EntityItem]](Vector())
   val filtered_entities = entities.lift(w => w.filter(x => x.selected).map(v => v))
-  val entity_map = entities.lift(w => w.map(v => v.item.getAccessURI.hashCode -> v).toMap)
+  val entity_map = entities.lift(w => w.map(v => v.hashCode -> v).toMap)
 
   val numPages = filtered_pages.lift(_.length)
   val numEntities = filtered_entities.lift(_.length)
@@ -207,30 +211,6 @@ class Cart extends Logger {
       addItem(resultItem)
     }
 
-    //       
-    //        
-    //        Timer.go("pic search")
-    //        for ( pic <- Picture.pictureSearch(query) ){
-    //     
-    //            for( p <- pic._3)  
-    //                pictures.atomicUpdate(v => v :+ CartItem(Item(pic._1, pic._2, p, pic._4, false,  1, pic._5),true))
-    //        }
-    //        info(Timer.stop)
-    //    
-    //        Timer.go("doc search")
-    //        Document.documentSearch(query,lang)
-    //        info(Timer.stop)
-    //        
-    //        for (doc <- Document.documentSearch(query, lang)) {
-    //      
-    //            pages.atomicUpdate(v => v :+ CartItem(Item(doc._1, doc._2, doc._3, doc._4, false, 1, doc._3), true))
-    //        }
-    //       
-    //
-    //        Timer.go("entity search")
-    //        for (ent <- Entity.entitySearch(query, lang)) {
-    //            entities.atomicUpdate(v => v :+ CartItem(Item(ent._1, ent._2, ent._3, "", false, 1, ent._3), true))
-    //        }
     info(Timer.stop)
   }
 
@@ -238,66 +218,29 @@ class Cart extends Logger {
    * Add an item to the cart. If it's already in the cart,
    * then increment the quantity
    */
-  def addItem(item: AllType) {
-    item.getResultType match {
+  def addItem(item: SearchResult) {
+    item.getProteusType.getValueDescriptor.getName.toLowerCase match {
       case "collection" =>
         contents.atomicUpdate(v => v.find(_.item == item) match {
           case Some(ci) => v.map(ci => ci.copy(selected = true))
           case _ =>
-            val img = item.getDepiction.apply(0)
-            v :+ BookItem(item.asInstanceOf[CollectionType], img, img, true)
+            v :+ BookItem(item, true)
         })
       case "page" =>
         pages.atomicUpdate(v =>
           {
-            val img = item.getDepiction.apply(0);
-            v :+ PageItem(item.asInstanceOf[PageType], img, img, true)
+            v :+ PageItem(item, true)
           })
       case "person" | "location" =>
         entities.atomicUpdate(v => {
-          val img = item.getDepiction.apply(0)
-          v :+ EntityItem(item, img, img, true)
+          v :+ EntityItem(item, true)
         })
       case "picture" =>
         pictures.atomicUpdate(v => {
-          val img = item.getDepiction.apply(0)
-          v :+ PictureItem(item.asInstanceOf[PictureType], img, img, true)
+          v :+ PictureItem(item, true)
         })
     }
   }
-  //
-  //  /**
-  //   * Set the item quantity. If zero or negative, remove
-  //   */
-  //  def setItemCnt(item: AllType, selected: Boolean) {
-  //    contents.atomicUpdate(v => v.find(_.item == item) match {
-  //      case Some(ci) => v.map(ci => ci.copy(selected =
-  //        (if (ci.item == item) selected
-  //        else ci.selected)))
-  //      case _ => v :+ BookItem(item.asInstanceOf[CollectionType], selected)
-  //    })
-  //
-  //    pictures.atomicUpdate(v => v.find(_.item.id.startsWith(item.id)) match {
-  //      case Some(ci) => v.map(ci => ci.copy(selected =
-  //        (if (ci.item.id.startsWith(item.id)) selected
-  //        else ci.selected)))
-  //      case _ => v
-  //    })
-  //
-  //    pages.atomicUpdate(v => v.find(_.item.id.startsWith(item.id)) match {
-  //      case Some(ci) => v.map(ci => ci.copy(selected =
-  //        (if (ci.item.id.startsWith(item.id)) selected
-  //        else ci.selected)))
-  //      case _ => v
-  //    })
-  //  }
-
-  //  /**
-  //   * Removes an item from the cart
-  //   */
-  //  def removeItem(item: AllType) {
-  //    contents.atomicUpdate(_.filterNot(_.item == item))
-  //  }
 
   def clearCart() {
 
@@ -316,21 +259,19 @@ class Cart extends Logger {
 /**
  * An item in the cart
  */
-case class BookItem(item: CollectionType, thumbImg: String, viewImg: String, selected: Boolean, id: String = Helpers.nextFuncName)
-case class PageItem(item: PageType, thumbImg: String, viewImg: String, selected: Boolean, id: String = Helpers.nextFuncName)
-case class PictureItem(item: PictureType, thumbImg: String, viewImg: String, selected: Boolean, id: String = Helpers.nextFuncName)
-case class EntityItem(item: AllType, thumbImg: String, viewImg: String, selected: Boolean, id: String = Helpers.nextFuncName) {
-  def isPerson: Boolean = item.getResultType == "person"
-  def asPerson: PersonType = item.asInstanceOf[PersonType]
-  def asLocation: LocationType = item.asInstanceOf[LocationType]
+trait CombinedHashable  {
+  def item: SearchResult
+  override def hashCode : Int = (item.getId.getIdentifier + item.getId.getResourceId).hashCode
 }
 
-                                                   /**
-                                                    * The CartItem companion object
-                                                    */
-//                                                   object CartItem {
-//                                        implicit def cartItemToItem(in: CartItem): Item = in.item
-//                                    }
-                                                   
+case class BookItem(item: SearchResult, selected: Boolean, full_obj: edu.umass.ciir.proteus.protocol.ProteusProtocol.Collection = null, id: String = Helpers.nextFuncName) extends CombinedHashable
+case class PageItem(item: SearchResult, selected: Boolean, full_obj: edu.umass.ciir.proteus.protocol.ProteusProtocol.Page = null, id: String = Helpers.nextFuncName) extends CombinedHashable
+case class PictureItem(item: SearchResult, selected: Boolean, full_obj: edu.umass.ciir.proteus.protocol.ProteusProtocol.Picture = null, id: String = Helpers.nextFuncName) extends CombinedHashable
+case class EntityItem(item: SearchResult, selected: Boolean, full_obj: Object = null, id: String = Helpers.nextFuncName) extends CombinedHashable {
+  def isPerson: Boolean = item.getProteusType.getValueDescriptor.getName == "person"
+  def asPerson : Person = if (full_obj == null) null else full_obj.asInstanceOf[Person]
+  def asLocation : Location = if (full_obj == null) null else full_obj.asInstanceOf[Location]
+}
+
                     
                                 

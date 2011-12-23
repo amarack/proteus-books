@@ -53,16 +53,16 @@ object AllEntitiesPage extends Logger {
                             // capture the tr part of the template
                             val theTR = ("tr ^^" #> "**")(ns)
 
-                            def ciToId(ci: EntityItem): String = ci.id + "_" + ci.item.getAccessURI.hashCode
+                            def ciToId(ci: EntityItem): String = ci.id + "_" + ci.hashCode
 
                             // build a row out of a cart item
                             def html(ci: EntityItem): NodeSeq = {
                                 ( "tr [id]" #> ciToId(ci) &
-                                 "a *" #> <strong>{ci.item.getResultTitle}</strong> &
-                                 "a [href]" #> Entity.getEntityLink(ci.item.getAccessURI.hashCode.toString, ci.item.getAccessURI.hashCode.toString) & //AnEntityPage.menu.calcHref(ci) &
-                                 "@cat *"  #> {ci.item.getResultType.capitalize} &
-                                 "@url *"  #> {Entity.getAdditionalInfo(ci.item)} &
-                                 "@ident *" #> {ci.item.getAccessURI.hashCode}
+                                 "a *" #> <strong>{ci.item.getTitle}</strong> &
+                                 "a [href]" #> Entity.getEntityLink(ci.hashCode.toString, ci.hashCode.toString) & //AnEntityPage.menu.calcHref(ci) &
+                                 "@cat *"  #> {ci.item.getProteusType.getValueDescriptor.getName.capitalize} &
+                                 "@url *"  #> {Entity.getAdditionalInfo(ci)} &
+                                 "@ident *" #> {ci.hashCode}
                                 )(theTR)
 
                             }

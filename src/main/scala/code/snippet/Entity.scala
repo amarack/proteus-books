@@ -2,13 +2,14 @@ package code
 package snippet
 
 // TODO: This file conversions needed
-import proteus.base._
+
 
 import java.util.HashSet
 import java.util.regex.Pattern
 import net.liftweb._
 import code.comet.TheCart
 import code.snippet._
+import code.lib._
 import http._
 //import org.galagosearch.tupleflow.Parameters
 import scala.collection.mutable.ArrayBuffer
@@ -42,6 +43,8 @@ import JsCmds._
 //import org.tartarus.snowball.ext.englishStemmer;
 
 import code.comet.BookBag._
+import edu.umass.ciir.proteus.protocol.ProteusProtocol._
+import scala.collection.JavaConverters._
 
 object Entity extends Query {
 
@@ -57,9 +60,9 @@ object Entity extends Query {
     }
 
   
-  def entitySearch(query :String, lang: String) : List[AllType] = {
+  def entitySearch(query :String, lang: String) : List[SearchResult] = {
     
-    val all_results = Librarian.performSearch(query, List("person", "location", "organization"))
+    val all_results = Librarian.performSearch(query, List("person", "location"))
     return all_results
   }
 
@@ -85,18 +88,20 @@ object Entity extends Query {
     val page = S.param("term").open_!
     val rlist = if (page.startsWith("page_")) {
 	      val pageItem = TheCart.get.findPageItem(page.slice(5, page.length).toInt).item
-	      pageItem.getPeople.getResults().get ::: pageItem.getLocations.getResults().get
+        val people = Librarian.library.getContents(pageItem.getId, ProteusType.PAGE, ProteusType.PERSON).get.getResultsList.asScala.toList
+        val locations = Librarian.library.getContents(pageItem.getId, ProteusType.PAGE, ProteusType.LOCATION).get.getResultsList.asScala.toList
+	      people ::: locations
 	    } else {
-	      Librarian.performSearch(page, List("person", "location", "organization")) 
+	      Librarian.performSearch(page, List("person", "location"))
 	    }
 
     rlist.foreach(r => TheCart.addItem(r))
-    "#entities" #> rlist.map(ent =>
-      "a *" #> <strong>{ent.getResultTitle}</strong> &
-      "a [href]" #> Entity.getEntityLink(ent.getAccessURI.hashCode.toString, ent.getAccessURI.hashCode.toString) &
-      "@cat *"  #> {ent.getResultType} &
+    "#entities" #> rlist.map(ent => TheCart.get.findEntityItem((ent.getId.getIdentifier + ent.getId.getResourceId).hashCode)).map(ent =>
+      "a *" #> <strong>{ent.item.getTitle}</strong> &
+      "a [href]" #> Entity.getEntityLink(ent.hashCode.toString, ent.hashCode.toString) &
+      "@cat *"  #> {ent.item.getProteusType.getValueDescriptor.getName.capitalize} &
       "@url *"  #> {Entity.getAdditionalInfo(ent)} &
-      "@ident *" #> {ent.getAccessURI.hashCode}
+      "@ident *" #> {ent.hashCode}
     ) &
     "@quantity" #> rlist.size
 
@@ -170,24 +175,22 @@ object Entity extends Query {
   }
 
   
-  def getAdditionalInfo(result: AllType) : String = {
-    result.getResultType match {
-      case "person" => {
-        val ent = result.asInstanceOf[PersonType]
-        val birth = ent.getBirthDate.apply(0)
-        val death = ent.getDeathDate.apply(0)
+  def getAdditionalInfo(result: EntityItem) : String = {
+    if (result.isPerson) {
+        val person = Librarian.library.lookupPerson(result.item).get
+        val birth = person.getBirthDate
+        val death = person.getDeathDate
         val birthStr = if(birth != -1) java.text.DateFormat.getDateInstance(java.text.DateFormat.MEDIUM).format(new java.util.Date(birth)) else "??"
         val deathStr = if(death != -1) java.text.DateFormat.getDateInstance(java.text.DateFormat.MEDIUM).format(new java.util.Date(death)) else "??"
         return "(" + birthStr + " - " + deathStr + ")"
-      }
-      case "location" => {
-        val ent = result.asInstanceOf[LocationType]
-        return "(Longitude: " + ent.getLongitude.apply(0) + ", Latitude: " + ent.getLatitude.apply(0) + ")"
-      }
-      case _ => {
-        return "Organization"
-      }
+    } else if (result.item.getProteusType == ProteusType.ORGANIZATION) {
+      println("ERROR: How'd you get that...")
+      return ""
+    } else {
+        val location = Librarian.library.lookupLocation(result.item).get
+        return "(" + location.getLongitude + ", " + location.getLatitude + ")"
     }
+
   }
    
   def printEntInfo = {
@@ -216,17 +219,17 @@ object Entity extends Query {
 
       try {
         val details = if(document.isPerson) {
-	          val pers: PersonType = document.asPerson
-	          (pers.getTermHistogram.apply(0), pers.getWikipediaLink.apply(0))
+	          val person = Librarian.library.lookupPerson(document.item).get
+	          (person.getLanguageModel.getTermsList.asScala, person.getWikiLink)
 	        } else {
-	          val loc: LocationType = document.asLocation
-	          (loc.getTermHistogram.apply(0), loc.getWikipediaLink.apply(0))
+	          val loc = Librarian.library.lookupLocation(document.item).get
+	          (loc.getLanguageModel.getTermsList.asScala, loc.getWikiLink)
 	        } //document.terms.toList
         val terms = details._1
         val wiki = details._2
         
         ".enttype" #> "Ambiguous Entity" &
-        ".entterm" #>  document.item.getResultTitle &
+        ".entterm" #>  document.item.getTitle &
         ".ambig" #> cannedAmbiguousResponse &
         ".searchAmb" #> <a href={"/search?q=entity_" + numID}>Search for this Entity</a> &
         //".desc" #> getEntityText(id) &
@@ -234,11 +237,11 @@ object Entity extends Query {
         //".entpic" #> <img src={getEntityImage(id)} /> &
         ".entwiki *" #> <a href={wiki}>Search wikipedia</a> &
         ".histTitle" #> "Histogram of surrounding terms:" &
-        ".histogram *" #> terms.map { (B) => <tr><td>{B._1}</td> <td>{B._2}</td></tr>}
+        ".histogram *" #> terms.map { (B) => <tr><td>{B.getTerm}</td> <td>{B.getWeight}</td></tr>}
       } catch {
         case _: NullPointerException => {
             ".enttype" #> "Ambiguous Entity" &
-            ".entterm" #> document.item.getResultTitle  &
+            ".entterm" #> document.item.getTitle  &
             ".searchAmb" #> <a href={"/search?q=entity_" + numID}>Search for this Entity</a> &
             ".ambig" #> {cannedAmbiguousResponse}
             //".entpic" #> <img src={getEntityImage(id)} /> &
@@ -251,27 +254,27 @@ object Entity extends Query {
     // to double quote string vars, ("\""*1)+getTitle(id)+("\""*1)
     else {
       val details = if(document.isPerson) {
-	          val pers: PersonType = document.asPerson
-	          (pers.getTermHistogram.apply(0), pers.getWikipediaLink.apply(0), getAdditionalInfo(pers) )
+	          val person = Librarian.library.lookupPerson(document.item).get
+	          (person.getLanguageModel.getTermsList.asScala, person.getWikiLink)
 	        } else {
-	          val loc: LocationType = document.asLocation
-	          (loc.getTermHistogram.apply(0), loc.getWikipediaLink.apply(0), getAdditionalInfo(loc))
+	          val loc = Librarian.library.lookupLocation(document.item).get
+	          (loc.getLanguageModel.getTermsList.asScala, loc.getWikiLink)
 	        } //document.terms.toList
       val terms = details._1
       val wiki = details._2
-      val info = details._3
+      val info = getAdditionalInfo(document)
       
 //      println("ENTITY: " + getTitle(id))
       ".enttype" #> "Disambiguated Entity" &
-      ".desc" #> document.item.getResultSummary.toString &
+      ".desc" #> document.item.getSummary.getText &
       ".searchWithThisEnt" #> <a href={"/search?q=entity_" + numID}>Search for this Entity</a> &
       //".findPagesWithThisEnt" #> <a href={getBooksWithEntityLink(numID)}>Show Pages mentioning this Entity</a> &
-      ".entterm" #> document.item.getResultTitle &
-      ".entpic" #> <img src={document.viewImg} /> &
+      ".entterm" #> document.item.getTitle &
+      ".entpic" #> <img src={document.item.getImgUrl} /> &
       ".wikilink" #> <a href={wiki}>Wikipedia Article</a> &
       ".longlat" #> info &
       ".histTitle" #> (if (terms.isEmpty) "" else "Histogram of surrounding terms:") &
-      ".histogram *" #> terms.map { (B) => <tr><td>{B._1}</td> <td>{B._2}</td></tr>}
+      ".histogram *" #> terms.map { (B) => <tr><td>{B.getTerm}</td> <td>{B.getWeight}</td></tr>}
     }
   }
 

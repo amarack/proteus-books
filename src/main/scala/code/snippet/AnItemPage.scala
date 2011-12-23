@@ -20,14 +20,14 @@ import scala.xml.Text
 
 object AnItemPage {
   // create a parameterized page
-  def menu = Menu.param[PageItem]("Item",Loc.LinkText(i => Text(i.item.getResultTitle)),
-                              (a:String) => Box(TheCart.get.findPageItem(a.toInt)), _.item.getAccessURI.hashCode.toString) / "item" / *
+  def menu = Menu.param[PageItem]("Item",Loc.LinkText(i => Text(i.item.getTitle)),
+                              (a:String) => Box(TheCart.get.findPageItem(a.toInt)), _.hashCode.toString) / "item" / *
 }
 
 class AnItemPage(item: PageItem) {
-  def render = "@name *" #> item.item.getResultTitle &
-  "@description *" #> item.item.getResultSummary.toString &
-  "@price *" #> item.item.getAccessURI &
+  def render = "@name *" #> item.item.getTitle &
+  "@description *" #> item.item.getSummary.getText &
+  "@price *" #> item.item.getExternalUrl &
   "@add_to_cart [onclick]" #> SHtml.ajaxInvoke(() => TheCart.addItem(item.item))
 }
 

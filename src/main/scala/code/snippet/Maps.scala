@@ -47,16 +47,19 @@ class Maps extends Logger {
   }
   import code.lib._
   import code.comet._
-  import proteus.base._ 
+  import edu.umass.ciir.proteus.protocol.ProteusProtocol._
+import edu.umass.ciir.proteus._
   
   def getPageLocations(id: String): ListBuffer[JsArray] = {
     val master:ListBuffer[JsArray] = new ListBuffer[JsArray]
-    val entities : List[LocationType] = {
-      if (TheCart.get.page_map.get.contains(id.toInt)) 
-        TheCart.get.page_map.get.apply(id.toInt).item.getLocations.getResults().get.map(i => i.asInstanceOf[LocationType])
+    val entities : List[SearchResult] = {
+      if (TheCart.get.page_map.get.contains(id.toInt)) {
+        val accessID = TheCart.get.page_map.get.apply(id.toInt).item.getId
+        Nil
+      }
       else if (TheCart.get.book_map.get.contains(id.toInt))
-        TheCart.get.book_map.get.apply(id.toInt).item.getLocations.getResults().get.map(i => i.asInstanceOf[LocationType])
-        else null
+        Nil //TheCart.get.book_map.get.apply(id.toInt).item.getLocations.getResults().get.map(i => i.asInstanceOf[LocationType])
+      else Nil
     }
 
     entities.foreach(e => TheCart.addItem(e))
@@ -64,10 +67,11 @@ class Maps extends Logger {
     
  
     for (entity <- entities) {    
-      val coordinates = (entity.getResultTitle, entity.getLongitude.apply(0), entity.getLatitude.apply(0))
+      val full_ent = Librarian.library.lookupLocation(entity).get
+      val coordinates = (entity.getTitle, full_ent.getLongitude, full_ent.getLatitude)
         println(coordinates)
         master.add(JsArray(Str(coordinates._1), Num(coordinates._2.toDouble), Num(coordinates._3.toDouble)))
-        idList.add(JsArray(Str(entity.getResultTitle), Str(entity.getAccessURI.hashCode.toString)))
+        idList.add(JsArray(Str(entity.getTitle), Str((entity.getId.getIdentifier + entity.getId.getResourceId).hashCode.toString)))
       
     }
     return master

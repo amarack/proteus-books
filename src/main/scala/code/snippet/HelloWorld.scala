@@ -8,8 +8,6 @@ import java.util.Date
 import code.lib._
 import Helpers._
 
-import proteus.web._
-
 class HelloWorld {
   lazy val date: Box[Date] = DependencyFactory.inject[Date] // inject the date
 

@@ -51,15 +51,15 @@ object AllPicturesPage extends Logger {
 
             val theTR = ("div ^^" #> "**")(ns)
             
-            def ciToId(ci: PictureItem): String = ci.id + "_" + ci.item.getAccessURI.hashCode
+            def ciToId(ci: PictureItem): String = ci.id + "_" + ci.hashCode
 
             // build a row out of any item
             def html(ci: PictureItem): NodeSeq = {
               
               ( "div [id]" #> ciToId(ci) &
-               "@pic *" #> <a href={ci.viewImg}>
+               "@pic *" #> <a href={ci.item.getImgUrl}>
                   <img title="Click to see picture page at the Internet Archive" 
-                    src={ci.viewImg} 
+                    src={ci.item.getImgUrl}
                     height={"120"} 
                     style={"padding: 7px 7px 7px 7px"}>
                   </img>

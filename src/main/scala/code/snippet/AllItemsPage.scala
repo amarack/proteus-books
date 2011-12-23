@@ -22,7 +22,7 @@ import util._
 import js._
 import js.jquery._
 import JsCmds._
-import proteus.base._
+
 import code.lib._
 
 object AllItemsPage {
@@ -62,23 +62,23 @@ object AllItemsPage {
               // capture the tr part of the template
               val theTR = ("tr ^^" #> "**")(ns)
 
-              def ciToId(i: PageItem): String = i.id + "_" + i.item.getAccessURI.hashCode
+              def ciToId(i: PageItem): String = i.id + "_" + i.hashCode
 
               // build a row out of a cart item
               def html(i: PageItem): NodeSeq = {
                 ( "tr [id]" #> ciToId(i) &
-                 "@name *" #> <u><strong>{scala.xml.Unparsed(i.item.getResultTitle)}</strong> (page {i.item.getPageNumber.apply(0)})</u>
-                 <p>{scala.xml.Unparsed(i.item.getResultSummary.tagTerms())}</p>
-                 <span>{LogServer.logLink("/doc?d=" + i.item.getAccessURI.hashCode, "[Show OCR output]",
+                 "@name *" #> <u><strong>{scala.xml.Unparsed(i.item.getTitle)}</strong></u>
+                 <p>{scala.xml.Unparsed(Librarian.library.tagTerms(i.item.getSummary))}</p>
+                 <span>{LogServer.logLink("/doc?d=" + i.hashCode, "[Show OCR output]",
                                           S.session.openOr("NONE").toString + " --> Show OCR on page link clicked (" + i.id + ")")}
                  <span> | </span>
-                 {LogServer.logLink(Document.getEntitySearchLink(i.item.getAccessURI.hashCode().toString), "[Show entities on this page]",
+                 {LogServer.logLink(Document.getEntitySearchLink(i.hashCode().toString), "[Show entities on this page]",
                                           S.session.openOr("NONE").toString + " --> Show entities on page link clicked (" + i.id + ")")}
                  <span> | </span>
-                 {LogServer.logLink(i.item.getAccessURI, "[View page at Internet Archive]",
-                                          S.session.openOr("NONE").toString + " --> Archive Link Clicked (" + i.item.getAccessURI + ")")}</span> &
-                 "@img *"  #> <a class="thumbnail" href="#thumb"><img src={i.thumbImg} width={"90"} height={"120"} />
-                    <span><img src={i.viewImg} width={"450"} height={"700"}></img></span></a> 
+                 {LogServer.logLink(i.item.getExternalUrl, "[View page at Internet Archive]",
+                                          S.session.openOr("NONE").toString + " --> Archive Link Clicked (" + i.item.getExternalUrl + ")")}</span> &
+                 "@img *"  #> <a class="thumbnail" href="#thumb"><img src={i.item.getThumbUrl} width={"90"} height={"120"} />
+                    <span><img src={i.item.getImgUrl} width={"450"} height={"700"}></img></span></a>
                 )(theTR)
 
               }
