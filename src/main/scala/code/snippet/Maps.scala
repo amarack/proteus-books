@@ -24,7 +24,7 @@ import scala.collection.mutable.ListBuffer
 import util._
 import Helpers._
 import scala.collection.JavaConversions._
-
+import akka.dispatch.Future
 
 class Maps extends Logger {
 
@@ -52,22 +52,41 @@ import edu.umass.ciir.proteus._
   
   def getPageLocations(id: String): ListBuffer[JsArray] = {
     val master:ListBuffer[JsArray] = new ListBuffer[JsArray]
-    val entities : List[SearchResult] = {
+    val entities : List[Location] = {
       if (TheCart.get.page_map.get.contains(id.toInt)) {
         val accessID = TheCart.get.page_map.get.apply(id.toInt).item.getId
-        Nil
+        val loc_results = Librarian.library.getContents(accessID, ProteusType.PAGE, ProteusType.LOCATION).mapTo[SearchResponse] flatMap {
+          locs => Future.traverse(locs.getResultsList.toList)(result => Librarian.library.lookupLocation(result))
+        }
+        loc_results.mapTo[List[Location]].get
       }
-      else if (TheCart.get.book_map.get.contains(id.toInt))
-        Nil //TheCart.get.book_map.get.apply(id.toInt).item.getLocations.getResults().get.map(i => i.asInstanceOf[LocationType])
+      else if (TheCart.get.book_map.get.contains(id.toInt)) {
+        val accessID = TheCart.get.book_map.get.apply(id.toInt).item.getId
+        println("Got access id: " + accessID)
+        val page_results = Librarian.library.getContents(accessID, ProteusType.COLLECTION, ProteusType.PAGE, num_requested = 10).mapTo[SearchResponse] flatMap {
+          pags => 
+            println("received pages...: " + pags.getResultsList.toList)
+            Future.traverse(pags.getResultsList.toList)(result => Librarian.library.getContents(result.getId, ProteusType.PAGE, ProteusType.LOCATION, num_requested = 10))
+        }
+        val loc_results = page_results.mapTo[List[SearchResponse]] flatMap {
+          locs => 
+            val flattend : List[SearchResult] = locs.map(_.getResultsList.toList).flatten
+            println("Got my list of responses: " + flattend + "\n....")
+            println("And sample result: " + flattend(0))
+            println(Librarian.library.lookupLocation(flattend(0)).get)
+            Future.traverse(flattend)((result: SearchResult) => Librarian.library.lookupLocation(result))
+        }
+        loc_results.mapTo[List[Location]].get
+      }
       else Nil
     }
 
-    entities.foreach(e => TheCart.addItem(e))
+   // entities.foreach(e => TheCart.addItem(e))
     var entity_count = 0
     
  
     for (entity <- entities) {    
-      val full_ent = Librarian.library.lookupLocation(entity).get
+      val full_ent = entity//Librarian.library.lookupLocation(entity).get
       val coordinates = (entity.getTitle, full_ent.getLongitude, full_ent.getLatitude)
         println(coordinates)
         master.add(JsArray(Str(coordinates._1), Num(coordinates._2.toDouble), Num(coordinates._3.toDouble)))

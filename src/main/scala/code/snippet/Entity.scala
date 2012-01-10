@@ -176,20 +176,20 @@ object Entity extends Query {
 
   
   def getAdditionalInfo(result: EntityItem) : String = {
-    if (result.isPerson) {
+    if (result.item.getProteusType.equals(ProteusType.PERSON)) {
         val person = Librarian.library.lookupPerson(result.item).get
         val birth = person.getBirthDate
         val death = person.getDeathDate
         val birthStr = if(birth != -1) java.text.DateFormat.getDateInstance(java.text.DateFormat.MEDIUM).format(new java.util.Date(birth)) else "??"
         val deathStr = if(death != -1) java.text.DateFormat.getDateInstance(java.text.DateFormat.MEDIUM).format(new java.util.Date(death)) else "??"
         return "(" + birthStr + " - " + deathStr + ")"
-    } else if (result.item.getProteusType == ProteusType.ORGANIZATION) {
+    } else if (result.item.getProteusType.equals(ProteusType.ORGANIZATION)) {
       println("ERROR: How'd you get that...")
-      return ""
-    } else {
+      return result.item.getProteusType.getValueDescriptor.getName.capitalize
+    } else if (result.item.getProteusType.equals(ProteusType.LOCATION)) {
         val location = Librarian.library.lookupLocation(result.item).get
         return "(" + location.getLongitude + ", " + location.getLatitude + ")"
-    }
+    } else return result.item.getProteusType.getValueDescriptor.getName.capitalize
 
   }
    
