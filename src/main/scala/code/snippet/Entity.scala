@@ -256,10 +256,14 @@ object Entity extends Query {
       val details = if(document.isPerson) {
 	          val person = Librarian.library.lookupPerson(document.item).get
 	          (person.getLanguageModel.getTermsList.asScala, person.getWikiLink)
-	        } else {
+	        } else if(document.isLocation) {
 	          val loc = Librarian.library.lookupLocation(document.item).get
 	          (loc.getLanguageModel.getTermsList.asScala, loc.getWikiLink)
-	        } //document.terms.toList
+	        } else {
+	          println("This shouldn't happen: ERROR: " + document.item.getProteusType)
+	          val org = Librarian.library.lookupOrganization(document.item).get
+	          (org.getLanguageModel.getTermsList.asScala, org.getWikiLink)
+	        }
       val terms = details._1
       val wiki = details._2
       val info = getAdditionalInfo(document)
