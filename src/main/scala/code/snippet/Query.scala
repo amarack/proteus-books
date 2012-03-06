@@ -32,7 +32,7 @@ import edu.umass.ciir.proteus._
 import scala.collection.JavaConversions._
 
 object Librarian extends Logger with ProteusAPI {
-  val library = new LibrarianClient("localhost", 8081)
+  val library = new LibrarianClient("mildura.cs.umass.edu", 8080)
 
   def performSearch(query:String, typesRequested: List[String]) : List[SearchResult] = {
       
